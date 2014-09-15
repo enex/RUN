@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	//"unicode"
+	"strconv"
+	"unicode"
 )
 
 /*
@@ -21,6 +22,11 @@ type Position struct {
 	Line uint16 //Zeile im Dokument
 	Col  uint8  //Zeichen in der Zeile
 }
+
+/*
+func (p Position) String() string {
+	return fmt.Sprint(p.Line, ":", p.Col)
+}*/
 
 func (p Position) Pos() Position {
 	return p
@@ -56,36 +62,37 @@ func (s *Scanner) Init(src string) {
 	s.next()
 }
 
-func (s *Scanner) Scan() Node {
+type Paren struct {
+	Position
+	content []Node
+}
+
+func (s *Scanner) scanParen() Node {
+	sp := s.pos //safe the position
+	s.next()    //go to the next char
+	content := make([]Node, 0)
+	for s.ch != ')' {
+		fmt.Println("consume")
+		content = append(content, s.scan())
+	}
+	s.next()
+	return Paren{Position: sp, content: content}
+}
+
+func (s *Scanner) scan() Node {
 	s.skipWhitespace()
-	lit := ""
-	if s.ch == '\n' { //Parse line break and ident after linebreak
-		lit = string(s.ch)
-		s.next()
-		for s.ch == '\t' {
-			lit += string(s.ch)
-			s.next()
-		}
-		return nil
+	if unicode.IsDigit(s.ch) {
+		return s.scanNumber()
 	}
 
-	/*
-		if unicode.IsLetter(s.ch) {
-			return s.scanIdentifier()
-		}
-	*/ /*
-		if unicode.IsDigit(s.ch) {
-			return s.scanNumber()
-		}*/
+	fmt.Println("scan", string(s.ch))
 
-	ch := s.ch //the prev character
-	lit = string(s.ch)
-	s.next()
-	switch ch {
+	switch s.ch {
 	case '(':
-		fmt.Println("LPAREN")
+		return s.scanParen()
 	case ')':
 		fmt.Println("RPAREN")
+		panic("a paren has been closed without an opening paren")
 	case '=':
 		fmt.Println("definition")
 	case '"': //String
@@ -93,11 +100,25 @@ func (s *Scanner) Scan() Node {
 	default:
 		if s.offset >= len(s.src)-1 {
 			fmt.Println("ende erreicht")
-		} /*else {
-			return s.scanIdentifier()
-		}*/
-	}
+		}
 
+	}
+	s.next()
+	return nil
+}
+
+func (s *Scanner) Scan() Node {
+	scope := make([]Node, 0)
+	for !(s.offset >= len(s.src)-1) {
+		n := s.scan()
+		if n != nil {
+			scope = append(scope, n)
+		}
+	}
+	fmt.Println(scope)
+	if len(scope) > 0 {
+		return scope[0]
+	}
 	return nil
 }
 
@@ -116,25 +137,26 @@ func (s *Scanner) next() {
 	}
 }
 
-/*
-func (s *Scanner) scanIdentifier() (string, Pos) {
-	start := s.offset
+type Number struct {
+	Position
+	num float64
+}
 
-	for unicode.IsLetter(s.ch) || unicode.IsDigit(s.ch) {
-		s.next()
+func NewNumber(s string, pos Position) Number {
+	num, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		panic(err)
 	}
-	offset := s.offset
-	if s.ch == rune(0) {
-		offset++
+	return Number{
+		num:      num,
+		Position: pos,
 	}
-	lit := s.src[start:offset]
-	return lit
-}*/
-/*
+}
+
 //Cosumes a number
 func (s *Scanner) scanNumber() Node {
 	start := s.offset
-
+	sp := s.pos
 	for unicode.IsDigit(s.ch) {
 		s.next()
 	}
@@ -142,26 +164,28 @@ func (s *Scanner) scanNumber() Node {
 	if s.ch == rune(0) {
 		offset++
 	}
-	return NewNumber(s.src[start:offset])
-}*/
+	fmt.Println("scan Number")
+	return NewNumber(s.src[start:offset], sp)
+}
 
 //Consumes one string
 func (s *Scanner) scanString() Node {
+	sp := s.pos //safe the position
+	s.next()
 	start := s.offset //start of the string
-	sp := s.pos       //safe the position
 	//TODO: implement strings correctly
-
 	for s.ch != '"' {
 		if s.ch == rune(0) {
-			return String{s.src[start:s.offset], sp}
+			break
 		}
 		s.next()
 		if s.ch == '\\' { //skipp escape sequences
 			s.next()
 		}
 	}
-	s.next()
 	offset := s.offset //end of the string
+	s.next()
+	//fmt.Println("String", s.src[start:offset], sp)
 	return String{s.src[start:offset], sp}
 }
 
@@ -187,9 +211,9 @@ func (s *Scanner) skipWhitespace() {
 }
 
 func (f *File) Read(s string) {
-	fmt.Println(s)
 	sc := Scanner{}
 	sc.Init(s)
+	fmt.Println("Scanned: ", sc.Scan())
 }
 
 //Symbol welches als plazhalter benutzt wird
@@ -203,6 +227,7 @@ type Pattern interface{}
 //node is the interface vor virtualy everything
 type Node interface {
 	Pos() Position
+	//String() string
 }
 
 //Definition gleicht dem "="
@@ -231,11 +256,14 @@ func (s *Scope) Parent() *Scope {
 }
 
 func main() {
-	fmt.Println("Hallo")
-	s := Symbol{"Hallo", Position{0, 1}}
-	fmt.Println(s)
 	f := &File{}
-	f.Read("(blablub)laä#k(aslkdj)asldkjf($a $b=b) \"Hallo\"")
+	f.Read(`
+test = 
+	Haus = "test"
+	Auto = 
+		if Haus == "test"
+			"ja"
+			"nein"
+	Baum = "nicht da"
+`)
 }
-
-type Part interface{}

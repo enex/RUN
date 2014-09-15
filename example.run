@@ -56,3 +56,8 @@ do
 		map links $link =
 			http.Get(link)//Ergebnisse aller links holen
 	$Seiten = Print(Seiten)
+
+
+Application
+	Name: "Compiler"
+	Functions: 
