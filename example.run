@@ -1,0 +1,58 @@
+//Standardlibrary
+true = $a $b = $a
+false = $a $b = $b
+
+if $condition $then $else = condition then else
+
+0 = $f $x = x
+1 = $f $x = f x
+2 = $f $x = f (f x)
+3 = $f $x = f (f (f x))
+4 = $f $x = f (f (f (f x)))
+5 = $f $x = f (f (f (f (f x))))
+6 = $f $x = f (f (f (f (f (f x)))))
+
+$n +1 = $f $x = f (n f x)
+$a + $b = $f $x = a f (b f x)
+$m * $n = $f = n (m f)
+$n -1 = $f $x
+
+$n ^ $m = n * n ^ ($m -1)
+$n ^ 1 = n
+
+//Tests:
+2 ^ 2 = 4
+/*
+Ein Test ist nichts anderes als eine Definition. Der Kompiler überprüft
+ob sich Definitionen wiedersprechen oder nicht. Wenn sie sich wiedersprechen, 
+ist der Test fehlgeschlagen und der Kompiler zeigt den Fehler. Das ist gleich
+zu setzen mit unit testing, allerdings sehr viel einfacher und mit mehr features.
+*/
+
+$n² = n * n
+$n³ = n² * n
+
+//Zwei Werte mit einander verbinden in einem Paar
+$a : $b = $key = if $key a b
+
+
+
+//String
+/*
+Ein String ist eine liste aus Buchstaben, die ihrerseits zahlen sind.
+Deshalb wird er auch genau so behandelt. Es gibt aber sonderfunktionen,
+welche den Umgang mit strings erleichtern
+*/
+String = all Numbers
+
+$s:String split $was:String =
+
+
+//Beispielprogramm:
+do
+	http.Get("http://google.com")
+	$r = extractLinks r
+	$links =
+		map links $link =
+			http.Get(link)//Ergebnisse aller links holen
+	$Seiten = Print(Seiten)
