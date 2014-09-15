@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # RUN
 
 Run ist eine kleine rein funktionale Programmiersrache, welche einfach zu lernen ist. 
@@ -42,9 +41,4 @@ Dieße Patterns können beliebig kombiniert werden und die Bedingungen sind wied
 
 #### Body
 In diesem teil befindet sich das ergebnis was anstelle des patterns geschreiben wird. Alle symbole, die im Pattern definiert werden werden dort durch den zugehörigen Wert ersetzt.
-=======
-RUN
-===
 
-Einfach zu lernende rein funktionale Programmiersprache
->>>>>>> 27af5849c91562e267af5e1d7a404bebf3912682
