@@ -8,7 +8,7 @@ import (
 
 func TestNumber(t *testing.T) {
 	s := New("8117")
-	r := s.Scan()
+	r := s.scan()
 	if r.(ast.Number).Num != 8117 {
 		t.Fail()
 	}
@@ -43,8 +43,14 @@ func TestParen(t *testing.T) {
 }
 
 func TestIdent(t *testing.T) {
-	s := New(`23
-	28 29 30`)
+	s := New(`1
+	21 22 23
+		31 32 33
+		321 322 323
+	24 25
+25
+$a + $b = a
+`)
 	r := s.Scan()
 	t.Log(r)
 	t.Fail()
