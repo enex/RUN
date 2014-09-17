@@ -16,7 +16,7 @@ Ein Pattern wird volgendermaßen definiert
 im foltenden Programm wird dann das pattern durch body ersetzt
 
 ## Syntax
-Die Komplette Programmiersprache baut auf dem Prinzip pattern matching auf. Das heißt die einzige überhaupt mögliche Funktion in RUN ist das matchen von Pattern und ersetzen durch das Ergebnis. Hierbei ist allerdings die Reihenvolge des pattern matchings zu beachten. Ein Match wird stets ausgehend vom aktuellen scope aufwerts gesucht.
+Die Komplette Programmiersprache baut auf dem Prinzip pattern matching auf. Das heißt die einzige überhaupt mögliche Funktion in RUN ist das matchen von Pattern und ersetzen durch das Ergebnis. Hierbei ist allerdings die Reihenvolge des pattern matchings zu beachten. Ein Match wird stets ausgehend vom aktuellen scope aufwerts gesucht. Das Pattern matching verhält sich damit ähnlich wie Maccros in anderen Programmiersprachen, stellt allerdings trotz des sehr einfachen syntax viele Funktionen bereit
 
 Die Maximale anzahl an Zeilen is 65535 und die Maximale Zeilenlänge beträgt
 255 Zeichen. Falls jemand versuchen sollt eine noch größere Zeile zu konstruieren, wird ein Fehler ausgegeben.
@@ -42,3 +42,6 @@ Dieße Patterns können beliebig kombiniert werden und die Bedingungen sind wied
 #### Body
 In diesem teil befindet sich das ergebnis was anstelle des patterns geschreiben wird. Alle symbole, die im Pattern definiert werden werden dort durch den zugehörigen Wert ersetzt.
 
+
+## Anderes
+Es ist außerdem möglich eine art typ-system ein zu führen.

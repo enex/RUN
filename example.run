@@ -1,24 +1,21 @@
 //Standardlibrary
-true = $a $b = $a
-false = $a $b = $b
+true = $a $b = a
+false = $a $b = b
 
 if $condition $then $else = condition then else
-
-0 = $f $x = x
-1 = $f $x = f x
-2 = $f $x = f (f x)
-3 = $f $x = f (f (f x))
-4 = $f $x = f (f (f (f x)))
-5 = $f $x = f (f (f (f (f x))))
-6 = $f $x = f (f (f (f (f (f x)))))
 
 $n +1 = $f $x = f (n f x)
 $a + $b = $f $x = a f (b f x)
 $m * $n = $f = n (m f)
 $n -1 = $f $x
 
-$n ^ $m = n * n ^ ($m -1)
-$n ^ 1 = n
+//Die Zahlen werden bereits vom Compiler implementiert und liegen
+//somit in der church notation vor
+
+//Definition von Potenzen
+$n ^ $m = if n > 1
+	n * n ^ ($m -1)
+	m
 
 //Tests:
 2 ^ 2 = 4
@@ -33,7 +30,7 @@ $n² = n * n
 $n³ = n² * n
 
 //Zwei Werte mit einander verbinden in einem Paar
-$a : $b = $key = if $key a b
+$a : $b = $key = if key a b
 
 
 
@@ -45,19 +42,56 @@ welche den Umgang mit strings erleichtern
 */
 String = all Numbers
 
-$s:String split $was:String =
+// Das speicher und IO-Konzept ist extrem einfach,
+// Als Programmierer stellt man sich einfach vor bei jeder Veränderung
+// würde das Programm aufgerufen werden und nach der Reaktion gefragt
+// werden.
+// Um selbst den zustand zu manipulieren gibt man einfach einen bestimmten
+// wert an, der dann vom Programm übernommen wird.
+Obj = $name : $value = name : value
+
+Obj
+	Simon: Laufach
+
+//=>(Obj (Simon: Laufach))
+//=>(($name : $value = pair name value) (Simon: Laufach))
+//=>(($name : $value = pair name value) (pair Simon Laufach))
+//=>(pair Simon Laufach)
+
+"Hallo":"Lukas" true
+//=>($key = if key "Hallo" "Lukas") true
+//=>($key = key "Hallo" "Lukas") true
+//=>true "Hallo" "Lukas"
+//=>($a $b = a) "Hallo" "Lukas"
+//=>"Hallo"
+
+// Beispielprogramm
+DrawPoint(Maus.x Maus.y)
+
+Dialog ?(title: $title) ?(resizable: $resizable) = Window
+	title: "Test-Anwendung"
+	resizable: true
+	Button
+		text: "OK"
+	Button
+		text: "Abbrechen"
+
+//Wenn z.B. die If funktion an + übergeben wierd anstatt der Zahl
+//kann diese nicht ausgeführt werden und der Compiler Meldet, das
+//Dießes Pattern nicht passt. Somit wird der Fehler noch vor der
+//Laufzeit erkannt und kann eliminiert werden, gleiches gilt für
+//Aufrufe die Kein Ergebnis leifern
+
+//Mit einem Führenden '#' kann erzwungen werden das die Definition aus
+//dem übergeordneten Scope verwendet wird. Wenn mehrere hinter einander
+//geschrieben werden wird eben so weit zurück gegangen
 
 
-//Beispielprogramm:
-do
-	http.Get("http://google.com")
-	$r = extractLinks r
-	$links =
-		map links $link =
-			http.Get(link)//Ergebnisse aller links holen
-	$Seiten = Print(Seiten)
+// Nebenwirkungen und io werden mit unique typing implementiert
 
+file = os.OpenFile("example.run")
+scanFile $file =
+	nf, line = file.ReadLine
+	scanFile nf (print line)
 
-Application
-	Name: "Compiler"
-	Functions: 
+scanFile file print
