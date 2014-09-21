@@ -62,7 +62,7 @@ func Lookup(str string) Token {
 			return t
 		}
 	}
-	return IDENT
+	return SYMBOL
 }
 
 func (t Token) String() string {
