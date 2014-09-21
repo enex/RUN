@@ -45,3 +45,21 @@ In diesem teil befindet sich das ergebnis was anstelle des patterns geschreiben 
 
 ## Anderes
 Es ist außerdem möglich eine art typ-system ein zu führen.
+
+
+Der Einfachheit halber implementiere ich erst mal noch kein typ-system, es ist aber möglich das späther zusätzliche Grammatik für die Patterns eingeführt wird, die Interface artige zugriffe erlaubt. Programme die vor dießer Änderung geschreiben wurden bleiben dadurch weiterhin funktionsfähig.
+
+Ich bin mir zur Zeit noch nicht sicher wie die Implementierung von Patterns genau sein soll.
+
+Problematisch ist vor allem die Verschachtelung von Pattern, die ich gerne so gut es geht vermeiden Möchte.
+
+Ansatz dazu:
+    Eine Definition die wiederum ein Pattern definiert, gibt dießes pattern als Ergebnis zurück, volglich wird die funktion bei Aufruf mit dießem Pattern dahinter aufgerufen.
+    Probleme
+        Es ist nicht differenzierbar ob ein Pattern als ergebnis-wert zurück gegeben wird, oder nicht.
+        Lößung:
+
+
+## Nebenwirkung
+
+Nebe
