@@ -1,8 +1,9 @@
 package main
 
 import (
-	"./Scanner"
+	"./scan"
 	"fmt"
+	"io/ioutil"
 )
 
 /*
@@ -17,14 +18,12 @@ Die sprace setzt nur auf ein Prinzip auf, Pattern matching.
 */
 
 func main() {
-	f := &File{}
-	f.Read(`
-test = 
-	Haus = "test"
-	Auto = 
-		if Haus == "test"
-			"ja"
-			"nein"
-	Baum = "nicht da"
-`)
+	data, err := ioutil.ReadFile("example.run")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	s := scan.New(string(data))
+	r := s.Scan()
+	fmt.Println(r)
 }

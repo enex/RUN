@@ -48,9 +48,9 @@ func (s *Scanner) scan() ast.Node {
 		return s.scanParen()
 	case ')':
 		fmt.Println("RPAREN")
-		panic("a paren has been closed without an opening paren")
-	case '=':
-		fmt.Println("definition")
+		//panic("a paren has been closed without an opening paren")
+	/*case '=':
+	fmt.Println("definition")*/
 	case '"': //String
 		return s.scanString()
 	case '/':
@@ -69,6 +69,7 @@ func (s *Scanner) scan() ast.Node {
 	default:
 		if s.offset >= len(s.src)-1 {
 			fmt.Println("ende erreicht")
+			return nil
 		}
 		fmt.Println("irgend was anderes")
 	}
