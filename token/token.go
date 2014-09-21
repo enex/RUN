@@ -26,6 +26,8 @@ const (
 
 	key_start
 	//keys
+	DEF
+	LAMBDA
 	key_end
 
 	tok_end
@@ -42,6 +44,8 @@ var tok_strings = map[Token]string{
 	STRING:  "string",
 	FLOAT:   "float",
 	LBR:     "lbr",
+	DEF:     "def",
+	LAMBDA:  "lambda",
 }
 
 func (t Token) IsLiteral() bool {
