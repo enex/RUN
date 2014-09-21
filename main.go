@@ -1,10 +1,9 @@
 package main
 
 import (
-	"./scan"
 	"fmt"
-	"github.com/codegangsta/cli"
-	"gopkg.in/fsnotify.v1"
+	"github.com/codegangsta/cli" //library which manages the console
+	"gopkg.in/fsnotify.v1"       //library neccessary for instant compilation
 	"io/ioutil"
 	"log"
 	"os"
@@ -88,7 +87,7 @@ func NewApp() *cli.App {
 						}
 					}
 				}()
-				log.Println("wather starten")
+				log.Println("instant watcher started")
 				err = watcher.Add("./")
 				if err != nil {
 					log.Fatal(err)
@@ -113,9 +112,7 @@ func NewApp() *cli.App {
 					fmt.Println(err)
 					return
 				}
-				s := scan.New(string(data))
-				r := s.Scan()
-				fmt.Println(r)
+				fmt.Println(data)
 			},
 		},
 	}
