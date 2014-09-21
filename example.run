@@ -95,3 +95,73 @@ scanFile $file =
 	scanFile nf (print line)
 
 scanFile file print
+
+dom->query "#test" //search a element with the id test
+	->addClass "test" //then add the class "test" to it
+	->childs $child = //loop over the childs
+		child->addClass "test" //also add class test to them
+	->onHover $event $target = //onHover over the object will be
+		target->addClass "hover" //removed by the result
+	->onMouseOut $event $target = //on MouseOut the call will
+		target->removeCall "hover" //be added again
+
+//Das ist genau das gleiche wie das obige Besipeil
+//Nur meiner ansich nach etwas unübersichtlicher
+d1 = query dom "#test"
+d2 = addClass d1 "test"
+d3 = childs d2 $child =
+	addCall child "test"
+d4 = onHover d3 $event $target =
+	addClass target "hover"
+d5 = onMouseOut d4 $event $target =
+	removeCall target "hover"
+
+nav = liste //Eine Liste definieren
+	"Home"
+	"Impressum"
+	"Galerie"
+
+content = "Das ist der Inhalt der Seite"
+
+dom = HTML
+	HEAD
+		TITLE "test"
+	BODY
+		HEADER
+			NAV #nav
+				UL
+					for nav $page = LI page
+		SECTION #content
+			content
+		FOOTER
+			"Die Fußzeile"
+
+// das dom wird manipuliert und an den aufrufer zurück gegeben.
+// wie man sehen kann ist dom Manipulation in RUN extrem leicht
+
+// Das ganze funktioniert zum eine im Browser, aber auch auf einem
+// Webserver, oder sogar ohne einen browser, in dießem Fall interpetiert
+// RUN selbst das DOM
+
+dom
+	->query "nav > ul"->style
+		list-style: none
+	->query "nav > ul > li"->style
+		font-size: 1.1em
+		text-decoration: none
+	->query "#content"->Center
+
+
+// eine DOM node kann auch dargestellt werden als
+// (obj type:$(or "html" "div" "head" "body") ?...) = 
+
+//Konsole
+Konsole
+	->Println "Hallo Welt"
+	->ScanLine $line $Konsole =
+		Konsole->Println line
+	->Println "Danke für die Eingabe"
+	->Println "exit"
+
+os.Open("test.txt")
+	->writeLine "Hallo Mein Name ist Simon"
