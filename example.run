@@ -1,167 +1,100 @@
-//Standardlibrary
-true = $a $b = a
-false = $a $b = b
+(def true (lambda (a) (lambda (b) a)))
+(def false (lambda (a) (lambda (b) b)))
 
-if $condition $then $else = condition then else
+//logical and operator
+(def and (lambda (p)
+	(lambda (q)
+		(p q p))))
 
-$n +1 = $f $x = f (n f x)
-$a + $b = $f $x = a f (b f x)
-$m * $n = $f = n (m f)
-$n -1 = $f $x
+//logical or operator
+(def or (lambda (p)
+	(lambda (q)
+		(p p q))))
 
-//Die Zahlen werden bereits vom Compiler implementiert und liegen
-//somit in der church notation vor
+//if then else statement
+(def if
+	(lambda (condition)
+		(lambda (then)
+			(lambda (else)
+				(condition then else)))))
 
-//Definition von Potenzen
-$n ^ $m = if n > 1
-	n * n ^ ($m -1)
-	m
+//tho not operator which negates the given value
+(def not
+	(lambda (a)
+		(if a false true)))
 
-//Tests:
-2 ^ 2 = 4
-/*
-Ein Test ist nichts anderes als eine Definition. Der Kompiler überprüft
-ob sich Definitionen wiedersprechen oder nicht. Wenn sie sich wiedersprechen, 
-ist der Test fehlgeschlagen und der Kompiler zeigt den Fehler. Das ist gleich
-zu setzen mit unit testing, allerdings sehr viel einfacher und mit mehr features.
-*/
+//constructor for a pair
+(def pair
+	(lambda (a)
+		(lambda (b)
+			(lambda (i)
+				(i a b)))))
 
-$n² = n * n
-$n³ = n² * n
+//First element of a pair
+(def first
+	(lambda (p)
+		(p true)))
 
-//Zwei Werte mit einander verbinden in einem Paar
-$a : $b = $key = if key a b
+//The second element of a pair
+(def second
+	(lambda (p)
+		(p false)))
 
+//== 0
+(def isZero
+	(lambda (n)
+		((lambda (x) false) true)))
 
+//Less than or equal
+(def LEQ
+	(lambda (m)
+		(lambda (n)
+			(IsZero (minus m n)))))
 
-//String
-/*
-Ein String ist eine liste aus Buchstaben, die ihrerseits zahlen sind.
-Deshalb wird er auch genau so behandelt. Es gibt aber sonderfunktionen,
-welche den Umgang mit strings erleichtern
-*/
-String = all Numbers
+//test two numbers for equality
+(def EQ
+	(lambda (m)
+		(lambda (n)
+			(and (LEQ m n) (LEQ n m)))))
+			
+//plus
+(def plus
+	(lambda (m)
+		(lambda (n)
+			(lambda (f)
+				(lambda (x)
+					(m f (n f x)))))))
+					
+//multiply
+(def mult
+	(lambda (m)
+		(lambda (n)
+			(lambda (f)
+				(m (n f))))))
+				
+//exponential
+(def exp
+	(lambda (m)
+		(lambda (n)
+			(n m))))
 
-// Das speicher und IO-Konzept ist extrem einfach,
-// Als Programmierer stellt man sich einfach vor bei jeder Veränderung
-// würde das Programm aufgerufen werden und nach der Reaktion gefragt
-// werden.
-// Um selbst den zustand zu manipulieren gibt man einfach einen bestimmten
-// wert an, der dann vom Programm übernommen wird.
-Obj = $name : $value = name : value
-
-Obj
-	Simon: Laufach
-
-//=>(Obj (Simon: Laufach))
-//=>(($name : $value = pair name value) (Simon: Laufach))
-//=>(($name : $value = pair name value) (pair Simon Laufach))
-//=>(pair Simon Laufach)
-
-"Hallo":"Lukas" true
-//=>($key = if key "Hallo" "Lukas") true
-//=>($key = key "Hallo" "Lukas") true
-//=>true "Hallo" "Lukas"
-//=>($a $b = a) "Hallo" "Lukas"
-//=>"Hallo"
-
-// Beispielprogramm
-DrawPoint(Maus.x Maus.y)
-
-Dialog ?(title: $title) ?(resizable: $resizable) = Window
-	title: "Test-Anwendung"
-	resizable: true
-	Button
-		text: "OK"
-	Button
-		text: "Abbrechen"
-
-//Wenn z.B. die If funktion an + übergeben wierd anstatt der Zahl
-//kann diese nicht ausgeführt werden und der Compiler Meldet, das
-//Dießes Pattern nicht passt. Somit wird der Fehler noch vor der
-//Laufzeit erkannt und kann eliminiert werden, gleiches gilt für
-//Aufrufe die Kein Ergebnis leifern
-
-//Mit einem Führenden '#' kann erzwungen werden das die Definition aus
-//dem übergeordneten Scope verwendet wird. Wenn mehrere hinter einander
-//geschrieben werden wird eben so weit zurück gegangen
-
-
-// Nebenwirkungen und io werden mit unique typing implementiert
-
-file = os.OpenFile("example.run")
-scanFile $file =
-	nf, line = file.ReadLine
-	scanFile nf (print line)
-
-scanFile file print
-
-dom->query "#test" //search a element with the id test
-	->addClass "test" //then add the class "test" to it
-	->childs $child = //loop over the childs
-		child->addClass "test" //also add class test to them
-	->onHover $event $target = //onHover over the object will be
-		target->addClass "hover" //removed by the result
-	->onMouseOut $event $target = //on MouseOut the call will
-		target->removeCall "hover" //be added again
-
-//Das ist genau das gleiche wie das obige Besipeil
-//Nur meiner ansich nach etwas unübersichtlicher
-d1 = query dom "#test"
-d2 = addClass d1 "test"
-d3 = childs d2 $child =
-	addCall child "test"
-d4 = onHover d3 $event $target =
-	addClass target "hover"
-d5 = onMouseOut d4 $event $target =
-	removeCall target "hover"
-
-nav = liste //Eine Liste definieren
-	"Home"
-	"Impressum"
-	"Galerie"
-
-content = "Das ist der Inhalt der Seite"
-
-dom = HTML
-	HEAD
-		TITLE "test"
-	BODY
-		HEADER
-			NAV #nav
-				UL
-					for nav $page = LI page
-		SECTION #content
-			content
-		FOOTER
-			"Die Fußzeile"
-
-// das dom wird manipuliert und an den aufrufer zurück gegeben.
-// wie man sehen kann ist dom Manipulation in RUN extrem leicht
-
-// Das ganze funktioniert zum eine im Browser, aber auch auf einem
-// Webserver, oder sogar ohne einen browser, in dießem Fall interpetiert
-// RUN selbst das DOM
-
-dom
-	->query "nav > ul"->style
-		list-style: none
-	->query "nav > ul > li"->style
-		font-size: 1.1em
-		text-decoration: none
-	->query "#content"->Center
-
-
-// eine DOM node kann auch dargestellt werden als
-// (obj type:$(or "html" "div" "head" "body") ?...) = 
-
-//Konsole
-Konsole
-	->Println "Hallo Welt"
-	->ScanLine $line $Konsole =
-		Konsole->Println line
-	->Println "Danke für die Eingabe"
-	->Println "exit"
-
-os.Open("test.txt")
-	->writeLine "Hallo Mein Name ist Simon"
+//-1
+(def pred
+	(lambda (n)
+		(lambda (f)
+			(lambda (x)
+				(n
+					(lambda (g)
+						(lambda (h)
+							(h (g f))
+						)
+					)
+					(lambda (u) x)
+					(lambda (u) u)
+				)))))
+				
+//-
+(def minus
+	(lambda (m)
+		(lambda (n)
+			((n pred) m))))

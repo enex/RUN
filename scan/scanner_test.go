@@ -1,57 +1,67 @@
 package scan
 
 import (
-	"fmt"
-	"github.com/enex/RUN/ast"
+	"github.com/enex/RUN/token"
 	"testing"
 )
 
-func TestNumber(t *testing.T) {
-	s := New("8117")
-	r := s.scan()
-	if r.(ast.Number).Num != 8117 {
-		t.Fail()
+//function to simplify testing for correctness
+func test_handler(t *testing.T, src string, expected []token.Token) {
+	var s Scanner
+	s.Init(token.NewFile("", 1, len(src)), src)
+	lit, tok, pos := s.Scan()
+	for i := 0; tok != token.EOF; i++ {
+		t.Log("tok:", tok.String(), "|", lit, "|", pos)
+		if i >= len(expected) {
+			t.Fatal(pos, "to meny tokens")
+		}
+		if tok != expected[i] {
+			t.Fatal(pos, "Expected:", expected[i], "Got:", tok)
+		}
+		lit, tok, pos = s.Scan()
 	}
+}
+
+func TestNumber(t *testing.T) {
+	test_handler(t, "9", []token.Token{
+		token.INTEGER,
+		token.EOF,
+	})
 }
 
 func TestString(t *testing.T) {
-	s := New(`"Hallo \" da"`)
-	r := s.scan()
-	t.Log(r)
-	t.Log(r.(ast.String).Value())
-	if r.(ast.String).Value() != "Hallo \" da" {
-		t.Fail()
-	}
+	test_handler(t, "\"Hello World\"", []token.Token{
+		token.STRING,
+		token.EOF,
+	})
 }
 
 func TestComment(t *testing.T) {
-	s := New(`//Das ist ein Comment`)
-	r := s.scan()
-	t.Log(r)
-	if r != nil {
-		t.Fail()
-	}
+	test_handler(t, "234//Hallo", []token.Token{
+		token.INTEGER,
+		token.COMMENT,
+		token.EOF,
+	})
 }
 
-func TestParen(t *testing.T) {
-	s := New("(23 34 75)")
-	r := s.scan()
-	t.Log(r)
-	if fmt.Sprint(r) != "( 23 34 75 )" {
-		t.Fail()
-	}
-}
-
-func TestIdent(t *testing.T) {
-	s := New(`1
-	21 22 23
-		31 32 33
-		321 322 323
-	24 25
-25
-$a + $b = a
-`)
-	r := s.Scan()
-	t.Log(r)
-	t.Fail()
+//test how good paren works with ()
+func TestLParen(t *testing.T) {
+	test_handler(t, "(a + b)(a - c (23 + 6))", []token.Token{
+		token.LPAREN,
+		token.SYMBOL,
+		token.SYMBOL,
+		token.SYMBOL,
+		token.RPAREN,
+		token.LPAREN,
+		token.SYMBOL,
+		token.SYMBOL,
+		token.SYMBOL,
+		token.LPAREN,
+		token.INTEGER,
+		token.SYMBOL,
+		token.INTEGER,
+		token.RPAREN,
+		token.RPAREN,
+		token.EOF,
+	})
 }

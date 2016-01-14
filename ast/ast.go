@@ -1,96 +1,139 @@
 package ast
 
 import (
-	"fmt"
 	"github.com/enex/RUN/token"
-	"strconv"
 )
 
-//node is the interface vor virtualy everything
 type Node interface {
-	Pos() token.Position
-	//String() string
+	Pos() token.Pos
+	End() token.Pos
 }
 
-type Paren struct {
-	token.Position
-	Content []Node
+type Expr interface {
+	Node
+	exprNode()
 }
 
-func (p Paren) String() string {
-	r := "( "
-	for _, e := range p.Content {
-		r += fmt.Sprint(e, " ")
-	}
-	return r + ")"
+type BasicLit struct {
+	LitPos token.Pos
+	Kind   token.Token
+	Lit    string
 }
 
-type Number struct {
-	token.Position
-	Num float64
+type BinaryExpr struct {
+	Expression
+	Op    token.Token
+	OpPos token.Pos
+	List  []Expr
 }
 
-func (n Number) String() string {
-	return fmt.Sprint(n.Num)
+type CallExpr struct {
+	Expression
+	Name *Ident
+	Args []Expr
 }
 
-func NewNumber(s string, pos token.Position) Number {
-	num, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		panic(err)
-	}
-	return Number{
-		Num:      num,
-		Position: pos,
-	}
+type DeclExpr struct {
+	Expression
+	Decl   token.Pos
+	Name   *Ident
+	Type   *Ident
+	Params []*Ident
+	Body   Expr
+	Scope  *Scope
 }
 
-type String struct {
-	string
-	token.Position
+type Expression struct {
+	Opening token.Pos
+	Closing token.Pos
 }
 
-func (s String) String() string {
-	//TODO: im String escapen
-	return "\"" + s.string + "\""
-}
-func (s String) Value() string {
-	return s.string
+type ExprList struct {
+	Expression
+	List []Expr
 }
 
-func NewString(s string, pos token.Position) String {
-	return String{s, pos}
+type File struct {
+	Scope *Scope
 }
 
-//Symbol welches als plazhalter benutzt wird
-type Symbol struct {
-	string
-	token.Position
+type Ident struct {
+	NamePos token.Pos
+	Name    string
+	Object  *Object // may be nil (ie. Name is a type keyword)
 }
 
-type Pattern interface{}
-
-//Definition gleicht dem "="
-type Definition struct {
-	Pattern Pattern
-	value   Node
-	token.Position
+type Object struct {
+	NamePos token.Pos
+	Name    string
+	Kind    ObKind
+	Offset  int
+	Type    *Ident // variable type, function return type, etc
+	Value   Expr
 }
 
-//Ein Match mit einem Pattern
-type Match struct {
-	*Definition
-	Values []Node
+type ObKind int
+
+type Package struct {
+	Scope *Scope
+	Files []*File
 }
 
-//Der scope ist eine schein struktur die alle wichtigen
-//Informationen in sich trägt
 type Scope struct {
-	parent *Scope
-	Defs   []Definition
+	Parent *Scope
+	Table  map[string]*Object
 }
 
-//parent of the scope, if not defined it will be nil
-func (s *Scope) Parent() *Scope {
-	return s.parent
+type UnaryExpr struct {
+	OpPos token.Pos
+	Op    string
+	Value Expr
+}
+
+func (b *BasicLit) Pos() token.Pos   { return b.LitPos }
+func (e *Expression) Pos() token.Pos { return e.Opening }
+func (f *File) Pos() token.Pos       { return token.NoPos }
+func (i *Ident) Pos() token.Pos      { return i.NamePos }
+func (p *Package) Pos() token.Pos    { return token.NoPos }
+func (u *UnaryExpr) Pos() token.Pos  { return u.OpPos }
+
+func (b *BasicLit) End() token.Pos   { return b.LitPos + token.Pos(len(b.Lit)) }
+func (e *Expression) End() token.Pos { return e.Closing }
+func (f *File) End() token.Pos       { return token.NoPos }
+func (i *Ident) End() token.Pos      { return i.NamePos + token.Pos(len(i.Name)) }
+func (p *Package) End() token.Pos    { return token.NoPos }
+func (u *UnaryExpr) End() token.Pos  { return u.Value.End() }
+
+func (b *BasicLit) exprNode()   {}
+func (e *Expression) exprNode() {}
+func (i *Ident) exprNode()      {}
+func (u *UnaryExpr) exprNode()  {}
+
+const (
+	Decl ObKind = iota
+	Var
+)
+
+func NewScope(parent *Scope) *Scope {
+	return &Scope{Parent: parent, Table: make(map[string]*Object)}
+}
+
+func (s *Scope) Insert(ob *Object) *Object {
+	if old, ok := s.Table[ob.Name]; ok {
+		return old
+	}
+	s.Table[ob.Name] = ob
+	return nil
+}
+
+func (s *Scope) Lookup(ident string) *Object {
+	ob, ok := s.Table[ident]
+	if ok || s.Parent == nil {
+		return ob
+	}
+	return s.Parent.Lookup(ident)
+}
+
+func (s *Scope) Size() int {
+	return len(s.Table)
 }

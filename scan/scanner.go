@@ -1,8 +1,6 @@
 package scan
 
 import (
-	"fmt"
-	"github.com/enex/RUN/ast"
 	"github.com/enex/RUN/token"
 	"unicode"
 )
@@ -13,82 +11,77 @@ type Scanner struct {
 	offset  int  //offset of currnt character
 	roffset int  //offset of next character
 
-	pos token.Position
-
 	src string //actual source code
 
-	file  *token.File
-	ident int
+	file *token.File
+
+	ident int //last read ident in tabs
 }
 
 // Init initializes Scanner and makes the source code ready to Scan
-func (s *Scanner) Init(src string) {
+func (s *Scanner) Init(file *token.File, src string) {
+	s.file = file
 	s.offset, s.roffset = 0, 0
 	s.src = src
+	s.file.AddLine(s.offset)
 
 	s.next()
 }
 
-func New(src string) Scanner {
+func New(file *token.File, src string) Scanner {
 	s := Scanner{}
-	s.Init(src)
+	s.Init(file, src)
 	return s
 }
 
-func (s *Scanner) scan() ast.Node {
+func (s *Scanner) Scan() (lit string, tok token.Token, pos token.Pos) {
 	s.skipWhitespace()
+
+	if s.ch == '\n' { //Parse line break and ident after linebreak
+		lit, pos = string(s.ch), s.file.Pos(s.offset)
+		tok = token.LBR
+		s.next()
+		for s.ch == '\t' {
+			lit += string(s.ch)
+			s.next()
+		}
+		return
+	}
+
+	if unicode.IsLetter(s.ch) {
+		return s.scanSymbol()
+	}
+
 	if unicode.IsDigit(s.ch) {
 		return s.scanNumber()
 	}
 
-	//fmt.Println("scan", string(s.ch))
-
-	switch s.ch {
+	ch := s.ch //the prev character
+	lit, pos = string(s.ch), s.file.Pos(s.offset)
+	s.next()
+	switch ch {
 	case '(':
-		return s.scanParen()
+		tok = token.LPAREN
 	case ')':
-		fmt.Println("RPAREN")
-		panic("a paren has been closed without an opening paren")
-	case '=':
-		fmt.Println("definition")
+		tok = token.RPAREN
+	case '/':
+		if s.ch == '/' {
+			s.next()
+			return s.scanComment()
+		}
+	case '!': //a token directly leading to an illegal token
+		tok = token.ILLEGAL
 	case '"': //String
 		return s.scanString()
-	case '/':
-		v := s.ch
-		p, pr := s.offset, s.roffset
-		s.next()
-		if s.ch == '/' {
-			s.consumeComment()
-		} else {
-			s.ch = v //set it back to the previous value
-			s.offset = p
-			s.roffset = pr
-		}
-	case '\n':
-		fmt.Println("Zeilenumbruch")
 	default:
 		if s.offset >= len(s.src)-1 {
-			fmt.Println("ende erreicht")
+			tok = token.EOF
+		} else {
+			return s.scanSymbol()
 		}
-		fmt.Println("irgend was anderes")
 	}
-	s.next()
-	return nil
-}
 
-func (s *Scanner) Scan() ast.Node {
-	scope := make([]ast.Node, 0)
-	for !(s.offset >= len(s.src)-1) {
-		n := s.scanLine()
-		if n != nil {
-			scope = append(scope, n)
-		}
-	}
-	fmt.Println(scope)
-	if len(scope) > 0 {
-		return scope[0]
-	}
-	return nil
+	return
 }
 
 func (s *Scanner) next() {
@@ -97,68 +90,30 @@ func (s *Scanner) next() {
 		s.offset = s.roffset
 		s.ch = rune(s.src[s.offset])
 		if s.ch == '\n' {
-			s.pos.Row++
-			s.pos.Col = 0
-		} else {
-			s.pos.Col++
+			s.file.AddLine(s.offset)
 		}
 		s.roffset++
 	}
 }
 
-func (s *Scanner) scanLine() ast.Node {
-	startIdent := s.ident //Save the ident when beginning scanning
-	e := ast.Paren{Position: s.pos, Content: make([]ast.Node, 0)}
-	for {
-		e.Content = append(e.Content, s.scan())
-		//fmt.Println(e)
-		if s.ch == '\n' {
-			//fmt.Println("new line")
-			i := 0
-			s.next()
-			for s.ch == '\t' {
-				i++
-				//fmt.Println("ident", i)
-				s.next()
-			}
-			s.ident = i
-			//fmt.Println(i, startIdent)
-			for s.ident > startIdent {
-				e.Content = append(e.Content, s.scanLine())
-			}
-			break
-			/*
-				offset := s.offset
-				roffset := s.roffset
+func (s *Scanner) scanSymbol() (string, token.Token, token.Pos) {
+	start := s.offset
 
-				s.offset = offset
-				roffset = roffset
-			*/
-		}
-		if s.offset >= len(s.src)-1 {
-			//fmt.Println("ende erreicht")
-			break
-		}
+	for unicode.IsLetter(s.ch) || unicode.IsDigit(s.ch) {
+		s.next()
 	}
-	return e
-}
-
-func (s *Scanner) scanParen() ast.Node {
-	sp := s.pos //safe the position
-	s.next()    //go to the next char
-	content := make([]ast.Node, 0)
-	for s.ch != ')' {
-		//fmt.Println("consume")
-		content = append(content, s.scan())
+	offset := s.offset
+	if s.ch == rune(0) {
+		offset++
 	}
-	s.next()
-	return ast.Paren{Position: sp, Content: content}
+	lit := s.src[start:offset]
+	return lit, token.Lookup(lit), s.file.Pos(start)
 }
 
 //Cosumes a number
-func (s *Scanner) scanNumber() ast.Node {
+func (s *Scanner) scanNumber() (string, token.Token, token.Pos) {
 	start := s.offset
-	sp := s.pos
+
 	for unicode.IsDigit(s.ch) {
 		s.next()
 	}
@@ -166,38 +121,40 @@ func (s *Scanner) scanNumber() ast.Node {
 	if s.ch == rune(0) {
 		offset++
 	}
-	//fmt.Println("scan Number")
-	return ast.NewNumber(s.src[start:offset], sp)
+	return s.src[start:offset], token.INTEGER, s.file.Pos(start)
 }
 
 //Consumes one string
-func (s *Scanner) scanString() ast.Node {
-	sp := s.pos //safe the position
-	s.next()
-	r := ""
+func (s *Scanner) scanString() (string, token.Token, token.Pos) {
+	start := s.offset //start of the string
+
 	//TODO: implement strings correctly
+
 	for s.ch != '"' {
-		r += string(s.ch)
 		if s.ch == rune(0) {
-			break
+			return s.src[start:s.offset], token.ILLEGAL, s.file.Pos(start)
 		}
-		s.next()
-		if s.ch == '\\' { //skipp escape sequences
-			s.next()
-			r += string(s.ch)
-			s.next()
-		}
+		s.next() /*
+			if s.ch == '\\' { //skipp escape sequences
+				s.next()
+			}*/
 	}
-	s.next() //skipp the las "
-	return ast.NewString(r, sp)
+	s.next()
+	offset := s.offset //end of the string
+	return s.src[start:offset], token.STRING, s.file.Pos(start)
 }
 
-//consume a Comment, it will be thrown away afterwards
-func (s *Scanner) consumeComment() {
+//scanns a comment, comments can actually be used by the compiler, so it
+//will be scanned and saved but maybe it will be thrown away later in the
+//Programm because no one cares about it
+func (s *Scanner) scanComment() (string, token.Token, token.Pos) {
+	start := s.offset //start tof the comment
 	for s.ch != '\n' && s.offset < len(s.src)-1 {
 		s.next()
 	}
 	s.next()
+	offset := s.offset + 1 //end of the comment
+	return s.src[start:offset], token.COMMENT, s.file.Pos(start)
 }
 
 //will skipp all the white spaces without caring about them
